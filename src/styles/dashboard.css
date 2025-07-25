@@ -1,0 +1,268 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+
+/* ========== Base Styles ========== */
+body {
+  font-family: sans-serif;
+  background: #f9f9f9;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+}
+
+h1,
+h2 {
+  margin-bottom: 1rem;
+}
+
+/* ========== Layout & Grid ========== */
+.dashboard {
+  padding: 2rem;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, auto);
+  gap: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.wide {
+  grid-column: span 2;
+}
+
+.span-rows {
+  grid-column: 3;
+  grid-row: 2 / span 2;
+}
+
+/* ========== Responsive Layout ========== */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .span-rows {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .dropdown {
+    width: 100%;
+  }
+}
+
+/* ========== Card Styling ========== */
+.card {
+  background: radial-gradient(circle at top left, #fdf3ec 0%, white 100%);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.card.Rscore,
+.card.categories,
+.card.Threats,
+.card.ThreatC,
+.card.Vul,
+.card.Resolv,
+.card.Real {
+  padding: 1rem;
+}
+
+.card.Vul,
+.card.Resolv {
+  min-height: 150px;
+}
+
+/* ========== Icons ========== */
+.icon-top-right {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+/* ========== Typography ========== */
+.score {
+  font-size: 1.5rem;
+  color: #e76f00;
+  margin: 0.5rem 0;
+  text-align: center;
+}
+
+.label {
+  font-size: 0.9rem;
+  color: #666;
+  text-align: center;
+}
+
+.green {
+  color: green;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.green1 {
+  color: green;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.orange {
+  color: #e76f00;
+}
+
+.delta {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.fourteen {
+  color: red;
+}
+
+/* ========== Dropdown ========== */
+.dropdown-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.dropdown {
+  width: 50%;
+  padding: 10px;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+/* ========== Table ========== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+thead {
+  background: #f0f0f0;
+}
+
+thead tr {
+  border-bottom: 8px solid transparent;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* ========== Severity Badges ========== */
+.high,
+.medium,
+.low {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: medium;
+  font-size: 0.75rem;
+  color: white;
+  text-align: center;
+  display: inline-block;
+  width: fit-content;
+}
+
+.high {
+  background-color: #e53935;
+}
+
+.medium {
+  background-color: #fb8c00;
+}
+
+.low {
+  background-color: #43a047;
+}
+
+.high:hover,
+.medium:hover,
+.low:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: 0.2s ease;
+}
+
+/* ========== Table Cells ========== */
+.status-cell {
+  font-size: regular;
+  color: green;
+  font-weight: 500;
+}
+
+.affected-cell {
+  text-align: center;
+}
+
+/* ========== Threat Categories ========== */
+.categories-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.category-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 50px;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.category-row .label {
+  text-align: left;
+  width: 100px;
+}
+
+.bar-wrapper {
+  background: #eee;
+  height: 8px;
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: orange;
+  border-radius: 1px;
+}
+
+/* ========== Progress Bar ========== */
+.progress-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.5rem 0;
+}
+
+.progress-bar {
+  flex: 1;
+  background-color: #eee;
+  border-radius: 1px;
+  height: 6px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background-color: orange;
+  height: 100%;
+  border-radius: 1px;
+}
