@@ -1,11 +1,16 @@
+import React, { JSX } from "react";
 import { Bug } from "lucide-react";
 import { Card } from "./ui/card";
 
-export function VulnerabilitiesCard() {
+export function VulnerabilitiesCard(): JSX.Element {
   return (
     <Card
       title="Vulnerabilities"
-      icon={<div className="bg-orange-100 text-red-600 p-2 rounded-full"><Bug /></div>}
+      icon={
+        <div className="bg-orange-100 text-red-600 p-2 rounded-full">
+          <Bug />
+        </div>
+      }
       extra={
         <p>
           <span className="fourteen">+14</span> from yesterday

@@ -1,14 +1,8 @@
 import { X } from "lucide-react";
 import React from "react";
+import { Threat } from "../types/threats";
 
 // Define the structure of a threat object
-interface Threat {
-  type: string;
-  time: string; // ISO timestamp
-  severity: string;
-  status: string;
-  affected: string;
-}
 
 // Define props for the component
 interface ThreatModalProps {

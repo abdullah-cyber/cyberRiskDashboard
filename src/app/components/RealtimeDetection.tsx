@@ -5,15 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import ThreatTable from "./ThreatTable";
 import ThreatModal from "./ThreatModal";
+import { Threat } from "../types/threats";
 
 // Define the shape of a threat item
-export interface Threat {
-  type: string;
-  time: string;
-  severity: "low" | "medium" | "high" | string;
-  status: string;
-  affected: string;
-}
+
 
 const fetchThreats = async (): Promise<Threat[]> => {
   const res = await fetch("/api/threats", { cache: "no-store" });

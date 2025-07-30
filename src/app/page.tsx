@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { RefreshCcw } from "lucide-react";
 import "../styles/dashboard.css";
+import type { SeverityLevel } from "./components/RiskScoreCard"; // adjust path if needed
+
 
 import {
   RiskScoreCard,
@@ -13,7 +15,7 @@ import {
 } from "./components";
 import { IncidenceChart } from "./components/IncidenceChart";
 import { ComplianceScore } from "./components/compliance-score";
-import RealtimeDetection  from "./components/RealtimeDetection"; // Correct named import
+import RealtimeDetection from "./components/RealtimeDetection";
 import ThreatsCardWrapper from "./components/ThreatsCardWrapper";
 
 // Define types
@@ -33,15 +35,21 @@ interface RawThreat {
   description: string;
 }
 
-// SSD version
-async function fetchThreats(): Promise<{ threats: Threat[]; yesterdayCount: number }> {
+// SSD fetcher
+async function fetchThreats(): Promise<{
+  threats: Threat[];
+  yesterdayCount: number;
+  chartData: { name: string; uv: number; pv: number; amt: number }[];
+}> {
   try {
-    const res = await fetch(`${process.env.BASE_URL || ""}/api/threats`, { cache: "no-store" });
+    const res = await fetch(`${process.env.BASE_URL || ""}/api/threats`, {
+      cache: "no-store",
+    });
     const data = await res.json();
 
     if (!res.ok) throw new Error(data.error || "Failed to fetch");
 
-    if (!Array.isArray(data.alerts)) return { threats: [], yesterdayCount: 0 };
+    if (!Array.isArray(data.alerts)) return { threats: [], yesterdayCount: 0, chartData: [] };
 
     const normalized = (data.alerts as RawThreat[]).map((t): Threat => ({
       type: t.model || "Unknown",
@@ -56,19 +64,33 @@ async function fetchThreats(): Promise<{ threats: Threat[]; yesterdayCount: numb
     const startOfYesterday = new Date(startOfToday);
     startOfYesterday.setDate(startOfToday.getDate() - 1);
 
-    const yesterdayCount = normalized.filter(threat => {
+    const yesterdayCount = normalized.filter((threat) => {
       const threatTime = new Date(threat.time);
       return threatTime >= startOfYesterday && threatTime < startOfToday;
     }).length;
 
-    return { threats: normalized, yesterdayCount };
+    const chartMap = new Map<string, number>();
+    normalized.forEach((t) => {
+      const hour = new Date(t.time).getHours();
+      const label = `${hour}:00`;
+      chartMap.set(label, (chartMap.get(label) || 0) + 1);
+    });
+
+    const chartData = Array.from(chartMap.entries()).map(([name, count]) => ({
+      name,
+      uv: count,
+      pv: 0,
+      amt: 0,
+    }));
+
+    return { threats: normalized, yesterdayCount, chartData };
   } catch (error) {
     console.error("SSD Fetch error:", error);
-    return { threats: [], yesterdayCount: 0 };
+    return { threats: [], yesterdayCount: 0, chartData: [] };
   }
 }
 
-// ✅ MAIN PAGE
+// ✅ Main dashboard page
 export default async function Dashboard() {
   const threatCategories = [
     { name: "Brute Force", percent: 34 },
@@ -77,35 +99,7 @@ export default async function Dashboard() {
     { name: "Phishing", percent: 4 },
   ];
 
-  const { threats: threatLog, yesterdayCount } = await fetchThreats();
-
-  const calculateRiskScore = (threats: Threat[]) => {
-    if (threats.length === 0) return { score: 0, severity: "Low" };
-
-    let total = 0;
-    threats.forEach((t) => {
-      switch (t.severity.toLowerCase()) {
-        case "high":
-          total += 10;
-          break;
-        case "medium":
-          total += 5;
-          break;
-        case "low":
-          total += 2;
-          break;
-        default:
-          total += 1;
-      }
-    });
-
-    const maxScore = threats.length * 10;
-    const score = Math.min(Math.round((total / maxScore) * 100), 100);
-    const severity = score >= 70 ? "High" : score >= 40 ? "Medium" : "Low";
-
-    return { score, severity };
-  };
-
+  const { threats: threatLog, yesterdayCount, chartData } = await fetchThreats();
   const { score: riskScore, severity: severityLevel } = calculateRiskScore(threatLog);
 
   return (
@@ -117,15 +111,43 @@ export default async function Dashboard() {
       </div>
 
       <div className="grid">
-        <RiskScoreCard riskScore={riskScore} severityLevel="Low" />
-        <ThreatsCardWrapper/>
+        <RiskScoreCard riskScore={riskScore} severityLevel={severityLevel} />
+        <ThreatsCardWrapper />
         <ThreatCategories categories={threatCategories} />
         <VulnerabilitiesCard />
         <IncidentsResolvedCard />
         <RealtimeDetection />
-        <IncidenceChart data={undefined} />
+        <IncidenceChart data={chartData} />
         <ComplianceScore />
       </div>
     </div>
   );
+}
+
+// ✅ Risk score logic
+function calculateRiskScore(threatLog: Threat[]): { score: number; severity: SeverityLevel } {
+  if (threatLog.length === 0) return { score: 0, severity: "Low" };
+
+  let total = 0;
+  threatLog.forEach((t) => {
+    switch (t.severity.toLowerCase()) {
+      case "high":
+        total += 10;
+        break;
+      case "medium":
+        total += 5;
+        break;
+      case "low":
+        total += 2;
+        break;
+      default:
+        total += 1;
+    }
+  });
+
+  const maxScore = threatLog.length * 10;
+  const score = Math.min(Math.round((total / maxScore) * 100), 100);
+  const severity: SeverityLevel = score >= 70 ? "High" : score >= 40 ? "Medium" : "Low";
+
+  return { score, severity };
 }

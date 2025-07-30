@@ -4,8 +4,15 @@ import { Activity } from "lucide-react";
 import { Chart } from "./charts/interaction";
 import { Card } from "./ui/card";
 
+interface ChartData {
+  name: string;
+  uv: number;
+  pv: number;
+  amt: number;
+}
+
 interface IncidenceChartProps {
-  data?: any; // Replace `any` with a specific type if you have chart data structure
+  data: ChartData[];
 }
 
 export function IncidenceChart({ data }: IncidenceChartProps) {

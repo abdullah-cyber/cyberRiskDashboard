@@ -1,7 +1,7 @@
 import { Shield } from "lucide-react";
 import { Card } from "./ui/card";
 
-type SeverityLevel = "High" | "Medium" | "Low";
+export type SeverityLevel = "High" | "Medium" | "Low";
 
 interface RiskScoreCardProps {
   riskScore?: number;
