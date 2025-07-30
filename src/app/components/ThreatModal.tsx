@@ -1,12 +1,29 @@
 import { X } from "lucide-react";
+import React from "react";
 
-export default function ThreatModal({ threat, onClose }) {
+// Define the structure of a threat object
+interface Threat {
+  type: string;
+  time: string; // ISO timestamp
+  severity: string;
+  status: string;
+  affected: string;
+}
+
+// Define props for the component
+interface ThreatModalProps {
+  threat: Threat;
+  onClose: () => void;
+}
+
+export default function ThreatModal({ threat, onClose }: ThreatModalProps) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative">
         <button
           onClick={onClose}
           className="absolute top-2 right-2 text-gray-500 hover:text-red-600"
+          aria-label="Close modal"
         >
           <X className="w-5 h-5" />
         </button>

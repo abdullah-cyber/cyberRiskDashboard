@@ -14,6 +14,7 @@ import {
 import { IncidenceChart } from "./components/IncidenceChart";
 import { ComplianceScore } from "./components/compliance-score";
 import RealtimeDetection  from "./components/RealtimeDetection"; // Correct named import
+import ThreatsCardWrapper from "./components/ThreatsCardWrapper";
 
 // Define types
 interface Threat {
@@ -116,8 +117,8 @@ export default async function Dashboard() {
       </div>
 
       <div className="grid">
-        <RiskScoreCard riskScore={riskScore} severityLevel={severityLevel} />
-        <ThreatsCard totalThreats={threatLog.length} yesterdayThreats={yesterdayCount} />
+        <RiskScoreCard riskScore={riskScore} severityLevel="Low" />
+        <ThreatsCardWrapper/>
         <ThreatCategories categories={threatCategories} />
         <VulnerabilitiesCard />
         <IncidentsResolvedCard />

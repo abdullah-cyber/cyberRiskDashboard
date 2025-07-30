@@ -1,7 +1,12 @@
 import { TriangleAlert } from "lucide-react";
 import { Card } from "./ui/card";
 
-export function ThreatsCard({ totalThreats, yesterdayThreats }) {
+interface ThreatsCardProps {
+  totalThreats: number;
+  yesterdayThreats: number;
+}
+
+export function ThreatsCard({ totalThreats, yesterdayThreats }: ThreatsCardProps) {
   return (
     <Card
       title="Threats"
@@ -16,9 +21,7 @@ export function ThreatsCard({ totalThreats, yesterdayThreats }) {
         </p>
       }
     >
-      <p className="font-medium text-4xl text-[#D82000]">
-        {totalThreats}
-      </p>
+      <p className="font-medium text-4xl text-[#D82000]">{totalThreats}</p>
     </Card>
   );
 }

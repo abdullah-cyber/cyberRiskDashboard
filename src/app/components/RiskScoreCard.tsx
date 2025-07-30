@@ -1,7 +1,18 @@
 import { Shield } from "lucide-react";
 import { Card } from "./ui/card";
 
-const severityColorMap = {
+type SeverityLevel = "High" | "Medium" | "Low";
+
+interface RiskScoreCardProps {
+  riskScore?: number;
+  severityLevel?: SeverityLevel;
+}
+
+const severityColorMap: Record<SeverityLevel, {
+  text: string;
+  bg: string;
+  bar: string;
+}> = {
   High: {
     text: "text-red-600",
     bg: "bg-red-100",
@@ -19,7 +30,10 @@ const severityColorMap = {
   },
 };
 
-export function RiskScoreCard({ riskScore = 0, severityLevel = "Low" }) {
+export function RiskScoreCard({
+  riskScore = 0,
+  severityLevel = "Low",
+}: RiskScoreCardProps) {
   const colors = severityColorMap[severityLevel] || severityColorMap.Low;
 
   return (
@@ -27,23 +41,23 @@ export function RiskScoreCard({ riskScore = 0, severityLevel = "Low" }) {
       title="Risk Score"
       icon={
         <div className={`${colors.bg} ${colors.text} p-2 rounded-full`}>
-          <Shield />
+          <Shield className="w-5 h-5" />
         </div>
       }
-      extra={severityLevel}
+      extra={<span className={`text-sm font-semibold ${colors.text}`}>{severityLevel}</span>}
     >
       <p className={`font-medium text-4xl ${colors.text}`}>
         {riskScore}/100
       </p>
-      <div className="progress-wrapper mt-2">
-        <div className="progress-bar bg-gray-200 h-3 rounded-full overflow-hidden">
+      <div className="mt-2">
+        <div className="bg-gray-200 h-3 rounded-full overflow-hidden">
           <div
-            className="progress-fill h-full rounded-full transition-all duration-300"
+            className="h-full rounded-full transition-all duration-300"
             style={{
               width: `${riskScore}%`,
               backgroundColor: colors.bar,
             }}
-          ></div>
+          />
         </div>
       </div>
     </Card>

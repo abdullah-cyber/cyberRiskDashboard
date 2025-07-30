@@ -6,24 +6,38 @@ import { Search } from "lucide-react";
 import ThreatTable from "./ThreatTable";
 import ThreatModal from "./ThreatModal";
 
-const fetchThreats = async () => {
+// Define the shape of a threat item
+export interface Threat {
+  type: string;
+  time: string;
+  severity: "low" | "medium" | "high" | string;
+  status: string;
+  affected: string;
+}
+
+const fetchThreats = async (): Promise<Threat[]> => {
   const res = await fetch("/api/threats", { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch");
   const data = await res.json();
-  return (data.alerts || []).map((t) => ({
+
+  return (data.alerts || []).map((t: any) => ({
     type: t.type || "Unknown",
     time: t.createdDateTime || new Date().toISOString(),
-    severity: t.severity || "low",
+    severity: t.severity?.toLowerCase?.() || "low",
     status: t.status || "Pending",
     affected: t.affected || "Unknown endpoint",
   }));
 };
 
 export default function RealtimeDetection() {
-  const [filter, setFilter] = useState("");
-  const [selectedThreat, setSelectedThreat] = useState(null);
+  const [filter, setFilter] = useState<string>("");
+  const [selectedThreat, setSelectedThreat] = useState<Threat | null>(null);
 
-  const { data: threatLog = [], isLoading, error } = useQuery({
+  const {
+    data: threatLog = [],
+    isLoading,
+    error,
+  } = useQuery<Threat[]>({
     queryKey: ["threats"],
     queryFn: fetchThreats,
     staleTime: 10000,
@@ -38,7 +52,9 @@ export default function RealtimeDetection() {
       <div className="flex justify-between items-center border-b pb-2 mb-2">
         <div className="flex items-center gap-2">
           <Search className="text-orange-500 w-5 h-5" />
-          <h4 className="text-lg font-semibold text-gray-800">Realtime Threat Detection</h4>
+          <h4 className="text-lg font-semibold text-gray-800">
+            Realtime Threat Detection
+          </h4>
         </div>
 
         <select
