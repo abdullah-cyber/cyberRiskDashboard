@@ -18,3 +18,9 @@ export async function fetchThreats(): Promise<Threat[]> {
     return [];
   }
 }
+export async function fetchThreatsInRange(from: string, to: string) {
+  const res = await fetch(`/api/threats?from=${from}&to=${to}`);
+  const data = await res.json();
+  return data.alerts;
+}
+

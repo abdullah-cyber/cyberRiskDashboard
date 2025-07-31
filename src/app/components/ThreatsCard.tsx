@@ -2,11 +2,15 @@ import { TriangleAlert } from "lucide-react";
 import { Card } from "./ui/card";
 
 interface ThreatsCardProps {
-  totalThreats: number;
-  yesterdayThreats: number;
+  totalThreats: number;        // last 24 hours
+  yesterdayThreats: number;    // previous 24 hours
 }
 
 export function ThreatsCard({ totalThreats, yesterdayThreats }: ThreatsCardProps) {
+  // Optional: Show a difference indicator
+  const delta = totalThreats - yesterdayThreats;
+  const isUp = delta >= 0;
+
   return (
     <Card
       title="Threats"
@@ -16,8 +20,12 @@ export function ThreatsCard({ totalThreats, yesterdayThreats }: ThreatsCardProps
         </div>
       }
       extra={
-        <p>
-          <span className="fourteen">+{yesterdayThreats}</span> from yesterday
+        <p className="text-sm text-muted-foreground">
+          <span className={`fourteen ${isUp ? "text-green-600" : "text-red-600"}`}>
+            {isUp ? "+" : ""}
+            {delta}
+          </span>{" "}
+          compared to previous 24h
         </p>
       }
     >

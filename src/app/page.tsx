@@ -4,6 +4,7 @@ import Image from "next/image";
 import { RefreshCcw } from "lucide-react";
 import "../styles/dashboard.css";
 import type { SeverityLevel } from "./components/RiskScoreCard"; // adjust path if needed
+import {VulnerabilitiesCardWrapper} from "./components/VulnerabilitiesWrapper";
 
 
 import {
@@ -114,7 +115,7 @@ export default async function Dashboard() {
         <RiskScoreCard riskScore={riskScore} severityLevel={severityLevel} />
         <ThreatsCardWrapper />
         <ThreatCategories categories={threatCategories} />
-        <VulnerabilitiesCard />
+        <VulnerabilitiesCardWrapper />
         <IncidentsResolvedCard />
         <RealtimeDetection />
         <IncidenceChart data={chartData} />

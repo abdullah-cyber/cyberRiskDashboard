@@ -1,4 +1,31 @@
-export async function GET() {
+import { NextRequest } from "next/server";
+
+type Indicator = {
+  type: string;
+  value: string;
+};
+
+type TrendMicroRawItem = {
+  model?: string;
+  type?: string;
+  createdDateTime?: string;
+  time?: string;
+  severity?: string;
+  status?: string;
+  investigationStatus?: string;
+  description?: string;
+  indicators?: Indicator[];
+};
+
+type Alert = {
+  type: string;
+  time: string;
+  severity: string;
+  status: string;
+  affected: string;
+};
+
+export async function GET(req: NextRequest) {
   const API_KEY = process.env.TREND_API_KEY;
 
   if (!API_KEY) {
@@ -8,6 +35,13 @@ export async function GET() {
     });
   }
 
+  const { searchParams } = req.nextUrl;
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
+
+  const fromDate = from ? new Date(from) : null;
+  const toDate = to ? new Date(to) : null;
+
   try {
     const res = await fetch("https://api.xdr.trendmicro.com/v3.0/workbench/alerts", {
       headers: {
@@ -16,9 +50,7 @@ export async function GET() {
       },
     });
 
-    const raw = await res.text(); // Grab raw text for debugging
-    // console.log("🔍 Raw TrendMicro response:", raw);
-
+    const raw = await res.text();
     if (!res.ok) {
       return new Response(
         JSON.stringify({ error: "TrendMicro API error", details: raw }),
@@ -29,19 +61,17 @@ export async function GET() {
       );
     }
 
-    const data = JSON.parse(raw); // Safely parse now
-    const alerts = (data.items || data.data || []).map((item: any) => {
+    const data = JSON.parse(raw);
+    const items: TrendMicroRawItem[] = data.items || data.data || [];
+
+    const alerts: Alert[] = items.map((item) => {
       const indicators = Array.isArray(item.indicators) ? item.indicators : [];
-      const filenameIndicator = indicators.find((ind: any) => ind.type === "filename");
-      const fullpathIndicator = indicators.find((ind: any) => ind.type === "fullpath");
-      const ipIndicator = indicators.find((ind: any) => ind.type === "ip");
+      const filename = indicators.find((ind) => ind.type === "filename");
+      const fullpath = indicators.find((ind) => ind.type === "fullpath");
+      const ip = indicators.find((ind) => ind.type === "ip");
 
       const affected =
-        filenameIndicator?.value ||
-        fullpathIndicator?.value ||
-        ipIndicator?.value ||
-        item.description ||
-        "Unknown endpoint";
+        filename?.value || fullpath?.value || ip?.value || item.description || "Unknown endpoint";
 
       return {
         type: item.model || item.type || "Unknown",
@@ -52,7 +82,12 @@ export async function GET() {
       };
     });
 
-    return new Response(JSON.stringify({ alerts }), {
+    const filtered = alerts.filter((alert) => {
+      const alertTime = new Date(alert.time);
+      return (!fromDate || alertTime >= fromDate) && (!toDate || alertTime <= toDate);
+    });
+
+    return new Response(JSON.stringify({ alerts: filtered }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
