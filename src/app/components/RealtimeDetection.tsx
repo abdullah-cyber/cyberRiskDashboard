@@ -1,21 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import ThreatTable from "./ThreatTable";
 import ThreatModal from "./ThreatModal";
 import { Threat } from "../types/threats";
 
-// Define the shape of a threat item
-
+// Define the shape of the raw threat item from API
+type RawThreat = {
+  type?: string;
+  createdDateTime?: string;
+  severity?: string;
+  status?: string;
+  affected?: string;
+};
 
 const fetchThreats = async (): Promise<Threat[]> => {
   const res = await fetch("/api/threats", { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch");
   const data = await res.json();
 
-  return (data.alerts || []).map((t: any) => ({
+  return (data.alerts || []).map((t: RawThreat) => ({
     type: t.type || "Unknown",
     time: t.createdDateTime || new Date().toISOString(),
     severity: t.severity?.toLowerCase?.() || "low",
@@ -38,9 +44,15 @@ export default function RealtimeDetection() {
     staleTime: 10000,
   });
 
-  const filteredThreats = filter
-    ? threatLog.filter((t) => t.severity.toLowerCase() === filter.toLowerCase())
-    : threatLog;
+  const filteredThreats = useMemo(
+    () =>
+      filter
+        ? threatLog.filter(
+            (t) => t.severity.toLowerCase() === filter.toLowerCase()
+          )
+        : threatLog,
+    [filter, threatLog]
+  );
 
   return (
     <div className="realtime p-4 flex flex-col h-full rounded-2xl shadow-md bg-white">

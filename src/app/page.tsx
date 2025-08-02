@@ -1,17 +1,11 @@
-// REMOVE "use client";
-
 import Image from "next/image";
 import { RefreshCcw } from "lucide-react";
 import "../styles/dashboard.css";
-import type { SeverityLevel } from "./components/RiskScoreCard"; // adjust path if needed
-import {VulnerabilitiesCardWrapper} from "./components/VulnerabilitiesWrapper";
-
-
+import type { SeverityLevel } from "./components/RiskScoreCard";
+import { VulnerabilitiesCardWrapper } from "./components/VulnerabilitiesWrapper";
 import {
   RiskScoreCard,
-  ThreatsCard,
   ThreatCategories,
-  VulnerabilitiesCard,
   IncidentsResolvedCard,
 } from "./components";
 import { IncidenceChart } from "./components/IncidenceChart";
@@ -19,7 +13,7 @@ import { ComplianceScore } from "./components/compliance-score";
 import RealtimeDetection from "./components/RealtimeDetection";
 import ThreatsCardWrapper from "./components/ThreatsCardWrapper";
 
-// Define types
+// Types
 interface Threat {
   type: string;
   time: string;
@@ -36,11 +30,12 @@ interface RawThreat {
   description: string;
 }
 
-// SSD fetcher
+// Fetch threats from API
 async function fetchThreats(): Promise<{
   threats: Threat[];
   yesterdayCount: number;
   chartData: { name: string; uv: number; pv: number; amt: number }[];
+  error?: string;
 }> {
   try {
     const res = await fetch(`${process.env.BASE_URL || ""}/api/threats`, {
@@ -50,7 +45,8 @@ async function fetchThreats(): Promise<{
 
     if (!res.ok) throw new Error(data.error || "Failed to fetch");
 
-    if (!Array.isArray(data.alerts)) return { threats: [], yesterdayCount: 0, chartData: [] };
+    if (!Array.isArray(data.alerts))
+      return { threats: [], yesterdayCount: 0, chartData: [] };
 
     const normalized = (data.alerts as RawThreat[]).map((t): Threat => ({
       type: t.model || "Unknown",
@@ -85,13 +81,13 @@ async function fetchThreats(): Promise<{
     }));
 
     return { threats: normalized, yesterdayCount, chartData };
-  } catch (error) {
+  } catch (error: any) {
     console.error("SSD Fetch error:", error);
-    return { threats: [], yesterdayCount: 0, chartData: [] };
+    return { threats: [], yesterdayCount: 0, chartData: [], error: error.message || "Unknown error" };
   }
 }
 
-// ✅ Main dashboard page
+// Main dashboard page
 export default async function Dashboard() {
   const threatCategories = [
     { name: "Brute Force", percent: 34 },
@@ -100,7 +96,7 @@ export default async function Dashboard() {
     { name: "Phishing", percent: 4 },
   ];
 
-  const { threats: threatLog, yesterdayCount, chartData } = await fetchThreats();
+  const { threats: threatLog, yesterdayCount, chartData, error } = await fetchThreats();
   const { score: riskScore, severity: severityLevel } = calculateRiskScore(threatLog);
 
   return (
@@ -111,7 +107,13 @@ export default async function Dashboard() {
         <RefreshCcw />
       </div>
 
-      <div className="grid">
+      {error && (
+        <div className="text-center text-red-600 font-semibold mb-4">
+          Failed to load threats data: {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <RiskScoreCard riskScore={riskScore} severityLevel={severityLevel} />
         <ThreatsCardWrapper />
         <ThreatCategories categories={threatCategories} />
@@ -125,7 +127,7 @@ export default async function Dashboard() {
   );
 }
 
-// ✅ Risk score logic
+// Risk score logic
 function calculateRiskScore(threatLog: Threat[]): { score: number; severity: SeverityLevel } {
   if (threatLog.length === 0) return { score: 0, severity: "Low" };
 
