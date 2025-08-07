@@ -10,5 +10,5 @@ export function VulnerabilitiesCardWrapper() {
     return <VulnerabilitiesCard total={0} />;
   }
 
-  return <VulnerabilitiesCard total={data.vulnerabilities.length} />;
+  return <VulnerabilitiesCard total={data.total_vulnerability_count} />;
 }

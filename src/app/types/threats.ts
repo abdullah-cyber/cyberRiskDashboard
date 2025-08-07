@@ -1,7 +1,9 @@
-export interface Threat {
+export type Severity = "low" | "medium" | "high" | "unknown";
+
+export type Threat = {
   type: string;
-  time: string; // ✅ only string!
-  severity: "low" | "medium" | "high";
+  time: string; // ISO string or empty if invalid
+  severity: Severity;
   status: string;
   affected: string;
-}
+};

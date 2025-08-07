@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React, { JSX, PureComponent } from "react";
 import {
   AreaChart,

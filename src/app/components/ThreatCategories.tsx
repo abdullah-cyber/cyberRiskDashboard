@@ -31,7 +31,9 @@ export function ThreatCategories({ categories }: ThreatCategoriesProps) {
                 style={{ width: `${item.percent}%` }}
               />
             </div>
-            <span className="percent w-10 text-right text-sm">{item.percent}%</span>
+            <span className="percent w-10 text-right text-sm">
+              {item.percent}%
+            </span>
           </div>
         ))}
       </div>

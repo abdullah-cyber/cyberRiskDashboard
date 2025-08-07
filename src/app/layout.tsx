@@ -11,9 +11,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <title>CyberSec Dashboard</title>
       </head>
       <body>
-        <Providers>
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { useRef } from "react";
 
 export interface Threat {
   type: string;
-  time: string;
+  time: string; // ISO string
   severity: string;
   status: string;
   affected: string;
@@ -22,59 +23,80 @@ interface ChartData {
 
 interface ThreatStats {
   totalThreats: number;
-  yesterdayThreats: number;
+  newThreats: number;
   alerts: Threat[];
-  chartData: ChartData[]; // <-- Add this
+  chartData: ChartData[];
 }
 
-export const useThreatsLast24Hours = () =>
-  useQuery<ThreatStats>({
+export const useThreatsLast24Hours = () => {
+  const accumulatedRef = useRef<Threat[]>([]);
+
+  return useQuery<ThreatStats>({
     queryKey: ["threats-24h"],
     queryFn: async () => {
       const res = await axios.get<ThreatsResponse>("/api/threats");
-      const alerts = res.data?.alerts || [];
+      const newAlertsRaw = res.data.alerts || [];
+
+      // ✅ Normalize all time strings to ISO format
+      const newAlerts: Threat[] = newAlertsRaw.map((a) => ({
+        ...a,
+        time: new Date(a.time).toISOString(),
+      }));
 
       const now = new Date();
       const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
-      const last24h = alerts.filter((a) => {
+      // ✅ Avoid duplicates
+      const previousKeys = new Set(
+        accumulatedRef.current.map((a) => `${a.time}-${a.affected}-${a.type}`),
+      );
+      const uniqueNew = newAlerts.filter(
+        (a) => !previousKeys.has(`${a.time}-${a.affected}-${a.type}`),
+      );
+
+      const combined = [...accumulatedRef.current, ...uniqueNew];
+
+      // ✅ Keep only unique alerts based on composite key
+      const map = new Map<string, Threat>();
+      for (const alert of combined) {
+        const key = `${alert.time}-${alert.affected}-${alert.type}`;
+        map.set(key, alert);
+      }
+
+      const filtered = Array.from(map.values()).filter((a) => {
         const t = new Date(a.time);
-        return !isNaN(t.getTime()) && t >= twentyFourHoursAgo;
+        return t >= twentyFourHoursAgo && t <= now;
       });
 
-      const prev24h = alerts.filter((a) => {
-        const t = new Date(a.time);
-        return !isNaN(t.getTime()) && t >= fortyEightHoursAgo && t < twentyFourHoursAgo;
-      });
+      accumulatedRef.current = filtered;
 
-      // ✅ Transform to ChartData[]
+      // ✅ Sort latest first
+      const sorted = [...filtered].sort(
+        (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime(),
+      );
+
+      // ✅ Group threats by hour for chart
       const chartDataMap = new Map<string, ChartData>();
-
-      last24h.forEach((threat) => {
+      sorted.forEach((threat) => {
         const date = new Date(threat.time);
-        const hour = `${date.getHours()}:00`;
-
+        const hour = `${date.getHours().toString().padStart(2, "0")}:00`;
         if (!chartDataMap.has(hour)) {
-          chartDataMap.set(hour, {
-            name: hour,
-            uv: 0,
-            pv: 0,
-            amt: 0,
-          });
+          chartDataMap.set(hour, { name: hour, uv: 0, pv: 0, amt: 0 });
         }
-
-        const entry = chartDataMap.get(hour)!;
-        entry.uv += 1; // You can change this logic
+        chartDataMap.get(hour)!.uv += 1;
       });
 
-      const chartData = Array.from(chartDataMap.values());
+      const chartData = Array.from(chartDataMap.values()).sort(
+        (a, b) => parseInt(a.name) - parseInt(b.name),
+      );
 
       return {
-        totalThreats: last24h.length,
-        yesterdayThreats: prev24h.length,
-        alerts: last24h,
-        chartData, // ✅ Return here
+        totalThreats: filtered.length,
+        newThreats: uniqueNew.length,
+        alerts: sorted,
+        chartData,
       };
     },
+    refetchInterval: 10000, // every 10s
   });
+};

@@ -20,14 +20,19 @@ type TrendMicroRawItem = {
 type Alert = {
   type: string;
   time: string;
-  severity: string;
+  severity: "low" | "medium" | "high";
   status: string;
   affected: string;
 };
 
+// 🔒 GLOBAL IN-MEMORY STORE (resets when server restarts)
+let threatStore: Alert[] = [];
+
+const PAGE_SIZE = 100;
+const MAX_PAGES = 20; // To avoid infinite loops (20 x 100 = 2000 alerts max)
+
 export async function GET(req: NextRequest) {
   const API_KEY = process.env.TREND_API_KEY;
-
   if (!API_KEY) {
     return new Response(JSON.stringify({ error: "API key missing" }), {
       status: 401,
@@ -35,73 +40,103 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const { searchParams } = req.nextUrl;
-  const from = searchParams.get("from");
-  const to = searchParams.get("to");
+  const now = new Date();
+  const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
-  const fromDate = from ? new Date(from) : null;
-  const toDate = to ? new Date(to) : null;
+  let allItems: TrendMicroRawItem[] = [];
+  let offset = 0;
 
   try {
-    const res = await fetch("https://api.xdr.trendmicro.com/v3.0/workbench/alerts", {
-      headers: {
-        Authorization: `Bearer ${API_KEY}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    const raw = await res.text();
-    if (!res.ok) {
-      return new Response(
-        JSON.stringify({ error: "TrendMicro API error", details: raw }),
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const res = await fetch(
+        `https://api.xdr.trendmicro.com/v3.0/workbench/alerts?limit=${PAGE_SIZE}&offset=${offset}`,
         {
-          status: res.status,
-          headers: { "Content-Type": "application/json" },
-        }
+          headers: {
+            Authorization: `Bearer ${API_KEY}`,
+            "Content-Type": "application/json",
+          },
+        },
       );
+
+      const raw = await res.text();
+      if (!res.ok) {
+        return new Response(
+          JSON.stringify({ error: "TrendMicro API error", details: raw }),
+          {
+            status: res.status,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      const data = JSON.parse(raw);
+      const items: TrendMicroRawItem[] = data.items || data.data || [];
+
+      allItems = allItems.concat(items);
+      if (items.length < PAGE_SIZE) break; // no more pages
+
+      offset += PAGE_SIZE;
     }
 
-    const data = JSON.parse(raw);
-    const items: TrendMicroRawItem[] = data.items || data.data || [];
+    const newAlerts = allItems
+      .map((item): Alert | null => {
+        const rawTime = item.createdDateTime || item.time;
+        const parsedTime = rawTime ? new Date(rawTime) : null;
+        if (!parsedTime || isNaN(parsedTime.getTime())) return null;
 
-    const alerts: Alert[] = items.map((item) => {
-      const indicators = Array.isArray(item.indicators) ? item.indicators : [];
-      const filename = indicators.find((ind) => ind.type === "filename");
-      const fullpath = indicators.find((ind) => ind.type === "fullpath");
-      const ip = indicators.find((ind) => ind.type === "ip");
+        const rawSeverity = (item.severity || "").toLowerCase();
+        const severity: "low" | "medium" | "high" =
+          rawSeverity === "high"
+            ? "high"
+            : rawSeverity === "medium"
+              ? "medium"
+              : "low";
 
-      const affected =
-        filename?.value || fullpath?.value || ip?.value || item.description || "Unknown endpoint";
+        const indicators = Array.isArray(item.indicators)
+          ? item.indicators
+          : [];
+        const filename = indicators.find((ind) => ind.type === "filename");
+        const fullpath = indicators.find((ind) => ind.type === "fullpath");
+        const ip = indicators.find((ind) => ind.type === "ip");
 
-      return {
-        type: item.model || item.type || "Unknown",
-        time: item.createdDateTime || item.time || new Date().toISOString(),
-        severity: item.severity || "low",
-        status: item.status || item.investigationStatus || "Pending",
-        affected,
-      };
-    });
+        const affected =
+          filename?.value ||
+          fullpath?.value ||
+          ip?.value ||
+          item.description ||
+          "Unknown endpoint";
 
-    const filtered = alerts.filter((alert) => {
-      const alertTime = new Date(alert.time);
-      return (!fromDate || alertTime >= fromDate) && (!toDate || alertTime <= toDate);
-    });
+        return {
+          type: item.model || item.type || "Unknown",
+          time: parsedTime.toISOString(),
+          severity,
+          status: item.status || item.investigationStatus || "Pending",
+          affected,
+        };
+      })
+      .filter((a): a is Alert => a !== null);
 
-    return new Response(JSON.stringify({ alerts: filtered }), {
+    // Combine with old cache
+    const combined = [...threatStore, ...newAlerts];
+
+    // Deduplicate by (time + affected + type)
+    const uniqueMap = new Map<string, Alert>();
+    for (const alert of combined) {
+      const key = `${alert.time}-${alert.affected}-${alert.type}`;
+      uniqueMap.set(key, alert); // latest wins
+    }
+    const deduped = Array.from(uniqueMap.values());
+    threatStore = deduped;
+
+    return new Response(JSON.stringify({ alerts: deduped }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
-    const err = error instanceof Error ? error : new Error("Unknown error");
-
-    console.error("❌ API Error:", err);
-
-    return new Response(
-      JSON.stringify({
-        error: "Internal server error",
-        message: err.message,
-      }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+  } catch (err) {
+    console.error("❌ Error fetching TrendMicro threats:", err);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }

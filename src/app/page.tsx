@@ -41,36 +41,58 @@ async function fetchThreats(): Promise<{
     const res = await fetch(`${process.env.BASE_URL || ""}/api/threats`, {
       cache: "no-store",
     });
-    const data = await res.json();
 
+    const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Failed to fetch");
 
-    if (!Array.isArray(data.alerts))
+    if (!Array.isArray(data.alerts)) {
       return { threats: [], yesterdayCount: 0, chartData: [] };
+    }
 
-    const normalized = (data.alerts as RawThreat[]).map((t): Threat => ({
-      type: t.model || "Unknown",
-      time: t.createdDateTime || new Date().toISOString(),
-      severity: t.severity || "low",
-      status: t.status || "Pending",
-      affected: t.description || "Unknown endpoint",
-    }));
+    const rawThreats = data.alerts as RawThreat[];
 
+    const normalized: Threat[] = rawThreats.map((t) => {
+      const validTime =
+        t.createdDateTime && !isNaN(Date.parse(t.createdDateTime))
+          ? t.createdDateTime
+          : null;
+
+      return {
+        type: t.model || "Unknown",
+        time: validTime ?? "", // keep empty string if invalid
+        severity: t.severity || "low",
+        status: t.status || "Pending",
+        affected: t.description || "Unknown endpoint",
+      };
+    });
+
+    // Only count valid timestamps for "yesterday" count
     const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
     const startOfYesterday = new Date(startOfToday);
     startOfYesterday.setDate(startOfToday.getDate() - 1);
 
     const yesterdayCount = normalized.filter((threat) => {
       const threatTime = new Date(threat.time);
-      return threatTime >= startOfYesterday && threatTime < startOfToday;
+      return (
+        !isNaN(threatTime.getTime()) &&
+        threatTime >= startOfYesterday &&
+        threatTime < startOfToday
+      );
     }).length;
 
     const chartMap = new Map<string, number>();
     normalized.forEach((t) => {
-      const hour = new Date(t.time).getHours();
-      const label = `${hour}:00`;
-      chartMap.set(label, (chartMap.get(label) || 0) + 1);
+      const d = new Date(t.time);
+      if (!isNaN(d.getTime())) {
+        const hour = d.getHours();
+        const label = `${hour}:00`;
+        chartMap.set(label, (chartMap.get(label) || 0) + 1);
+      }
     });
 
     const chartData = Array.from(chartMap.entries()).map(([name, count]) => ({
@@ -80,10 +102,19 @@ async function fetchThreats(): Promise<{
       amt: 0,
     }));
 
-    return { threats: normalized, yesterdayCount, chartData };
+    return {
+      threats: normalized,
+      yesterdayCount,
+      chartData,
+    };
   } catch (error: any) {
     console.error("SSD Fetch error:", error);
-    return { threats: [], yesterdayCount: 0, chartData: [], error: error.message || "Unknown error" };
+    return {
+      threats: [],
+      yesterdayCount: 0,
+      chartData: [],
+      error: error.message || "Unknown error",
+    };
   }
 }
 
@@ -96,8 +127,14 @@ export default async function Dashboard() {
     { name: "Phishing", percent: 4 },
   ];
 
-  const { threats: threatLog, yesterdayCount, chartData, error } = await fetchThreats();
-  const { score: riskScore, severity: severityLevel } = calculateRiskScore(threatLog);
+  const {
+    threats: threatLog,
+    yesterdayCount,
+    chartData,
+    error,
+  } = await fetchThreats();
+  const { score: riskScore, severity: severityLevel } =
+    calculateRiskScore(threatLog);
 
   return (
     <div className="dashboard">
@@ -128,7 +165,10 @@ export default async function Dashboard() {
 }
 
 // Risk score logic
-function calculateRiskScore(threatLog: Threat[]): { score: number; severity: SeverityLevel } {
+function calculateRiskScore(threatLog: Threat[]): {
+  score: number;
+  severity: SeverityLevel;
+} {
   if (threatLog.length === 0) return { score: 0, severity: "Low" };
 
   let total = 0;
@@ -150,7 +190,8 @@ function calculateRiskScore(threatLog: Threat[]): { score: number; severity: Sev
 
   const maxScore = threatLog.length * 10;
   const score = Math.min(Math.round((total / maxScore) * 100), 100);
-  const severity: SeverityLevel = score >= 70 ? "High" : score >= 40 ? "Medium" : "Low";
+  const severity: SeverityLevel =
+    score >= 70 ? "High" : score >= 40 ? "Medium" : "Low";
 
   return { score, severity };
 }

@@ -28,7 +28,7 @@ function severityColor(severity: unknown) {
 }
 
 function rowBorder(severity: string) {
-    if (typeof severity !== "string") {
+  if (typeof severity !== "string") {
     return "bg-gray-300 text-gray-300";
   }
   switch (severity?.toLowerCase()) {
@@ -57,7 +57,10 @@ export default function VulnerabilitiesModal({
 
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">
-      <div className="fixed inset-0 bg-gradient-to-br from-red-100 via-white to-blue-100 bg-opacity-80 backdrop-blur-sm" aria-hidden="true" />
+      <div
+        className="fixed inset-0 bg-gradient-to-br from-red-100 via-white to-blue-100 bg-opacity-80 backdrop-blur-sm"
+        aria-hidden="true"
+      />
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="relative bg-white/90 backdrop-blur-lg p-8 rounded-2xl max-w-3xl w-full shadow-2xl border border-gray-200">
           <button
@@ -68,8 +71,18 @@ export default function VulnerabilitiesModal({
             &times;
           </button>
           <Dialog.Title className="text-2xl font-extrabold mb-6 text-gray-800 flex items-center gap-2">
-            <svg className="w-7 h-7 text-red-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-7 h-7 text-red-500"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             Top 10 Latest Vulnerabilities
           </Dialog.Title>
@@ -93,8 +106,11 @@ export default function VulnerabilitiesModal({
                 <thead>
                   <tr className="bg-gradient-to-r from-gray-100 to-gray-200">
                     <th className="p-3 font-semibold text-gray-700">Name</th>
-                    <th className="p-3 font-semibold text-gray-700">Severity</th>
+                    <th className="p-3 font-semibold text-gray-700">
+                      Severity
+                    </th>
                     <th className="p-3 font-semibold text-gray-700">Count</th>
+                    <th className="p-3 font-semibold text-gray-700">State</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -107,13 +123,20 @@ export default function VulnerabilitiesModal({
                         {vuln.plugin_name}
                       </td>
                       <td className="p-3 border-t border-gray-100">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold shadow ${severityColor(vuln.severity)}`}>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-bold shadow ${severityColor(vuln.severity)}`}
+                        >
                           {vuln.severity}
                         </span>
                       </td>
                       <td className="p-3 border-t border-gray-100 text-center">
                         <span className="inline-block bg-gray-100 px-3 py-1 rounded text-xs font-semibold text-gray-700 shadow">
                           {vuln.count}
+                        </span>
+                      </td>
+                      <td className="p-3 border-t border-gray-100 text-center">
+                        <span className="inline-block bg-gray-100 px-3 py-1 rounded text-xs font-semibold text-gray-700 shadow">
+                          {vuln.vulnerability_state}
                         </span>
                       </td>
                     </tr>

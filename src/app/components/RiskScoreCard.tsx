@@ -8,11 +8,14 @@ interface RiskScoreCardProps {
   severityLevel?: SeverityLevel;
 }
 
-const severityColorMap: Record<SeverityLevel, {
-  text: string;
-  bg: string;
-  bar: string;
-}> = {
+const severityColorMap: Record<
+  SeverityLevel,
+  {
+    text: string;
+    bg: string;
+    bar: string;
+  }
+> = {
   High: {
     text: "text-red-600",
     bg: "bg-red-100",
@@ -44,11 +47,13 @@ export function RiskScoreCard({
           <Shield className="w-5 h-5" />
         </div>
       }
-      extra={<span className={`text-sm font-semibold ${colors.text}`}>{severityLevel}</span>}
+      extra={
+        <span className={`text-sm font-semibold ${colors.text}`}>
+          {severityLevel}
+        </span>
+      }
     >
-      <p className={`font-medium text-4xl ${colors.text}`}>
-        {riskScore}/100
-      </p>
+      <p className={`font-medium text-4xl ${colors.text}`}>{riskScore}/100</p>
       <div className="mt-2">
         <div className="bg-gray-200 h-3 rounded-full overflow-hidden">
           <div

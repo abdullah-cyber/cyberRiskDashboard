@@ -23,11 +23,25 @@ export default function ThreatModal({ threat, onClose }: ThreatModalProps) {
         </button>
         <h3 className="text-lg font-bold mb-4 text-gray-800">Threat Details</h3>
         <div className="space-y-2 text-sm text-gray-700">
-          <p><strong>Model:</strong> {threat.type}</p>
-          <p><strong>Time:</strong> {new Date(threat.time).toLocaleString()}</p>
-          <p><strong>Severity:</strong> {threat.severity}</p>
-          <p><strong>Status:</strong> {threat.status}</p>
-          <p><strong>Summary:</strong> {threat.affected}</p>
+          <p>
+            <strong>Model:</strong> {threat.type}
+          </p>
+          <p>
+            <strong>Time:</strong>
+            {threat.time === "Unknown"
+              ? "Unknown"
+              : new Date(threat.time).toLocaleString()}
+          </p>
+
+          <p>
+            <strong>Severity:</strong> {threat.severity}
+          </p>
+          <p>
+            <strong>Status:</strong> {threat.status}
+          </p>
+          <p>
+            <strong>Summary:</strong> {threat.affected}
+          </p>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Card } from "./ui/card";
 import { Lock } from "lucide-react";

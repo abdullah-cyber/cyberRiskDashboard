@@ -21,7 +21,11 @@ export function VulnerabilitiesCard({ total }: VulnerabilitiesCardProps) {
               <Bug />
             </div>
           }
-          extra={<p className="text-sm text-muted-foreground">Fetched from Tenable</p>}
+          extra={
+            <p className="text-sm text-muted-foreground">
+              Fetched from Tenable
+            </p>
+          }
         >
           <p className="font-medium text-4xl text-yellow-700">{total}</p>
         </Card>

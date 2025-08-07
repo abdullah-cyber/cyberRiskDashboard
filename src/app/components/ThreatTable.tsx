@@ -1,11 +1,11 @@
 import React, { JSX } from "react";
 import { Threat } from "../types/threats";
-
+import { safeParseTime } from "../lib/utils";
 
 type ThreatTableProps = {
   threats: Threat[];
   isLoading: boolean;
-  error: Error | null; // <-- updated!
+  error: Error | null;
   onRowClick: (threat: Threat) => void;
 };
 
@@ -15,6 +15,11 @@ export default function ThreatTable({
   error,
   onRowClick,
 }: ThreatTableProps): JSX.Element {
+  console.log(
+    "📦 Threat times:",
+    threats.map((t) => t.time),
+  );
+
   return (
     <div className="overflow-y-auto overflow-x-hidden flex-1">
       <table className="w-full text-sm text-left border-collapse table-fixed">
@@ -54,8 +59,11 @@ export default function ThreatTable({
                 className="hover:bg-gray-50 cursor-pointer"
               >
                 <td className="py-2 px-4 truncate">{t.type}</td>
-                <td className="py-2 px-4 truncate">
-                  {new Date(t.time).toISOString().replace("T", " ").slice(0, 19)}
+                <td
+                  className="px-4 py-2 text-sm text-gray-800 max-w-[100px] truncate"
+                  title={new Date(t.time).toISOString()}
+                >
+                  {safeParseTime(t.time)}
                 </td>
                 <td className="py-2 px-4">
                   <span
@@ -63,8 +71,8 @@ export default function ThreatTable({
                       t.severity === "high"
                         ? "bg-red-500"
                         : t.severity === "medium"
-                        ? "bg-orange-500"
-                        : "bg-green-500"
+                          ? "bg-orange-500"
+                          : "bg-green-500"
                     }`}
                   >
                     {t.severity}

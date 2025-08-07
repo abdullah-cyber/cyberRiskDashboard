@@ -1,7 +1,7 @@
 "use client";
 
 import { ThreatsCard } from "./ThreatsCard";
-import { useThreatsLast24Hours } from "../lib/threats24hrs"
+import { useThreatsLast24Hours } from "../lib/threats24hrs";
 
 export default function ThreatsCardWrapper() {
   const { data, isLoading, error } = useThreatsLast24Hours();
@@ -14,7 +14,7 @@ export default function ThreatsCardWrapper() {
   return (
     <ThreatsCard
       totalThreats={data.totalThreats}
-      yesterdayThreats={data.yesterdayThreats}
+      newThreats={data.newThreats}
     />
   );
 }

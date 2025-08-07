@@ -7,27 +7,24 @@ import ThreatTable from "./ThreatTable";
 import ThreatModal from "./ThreatModal";
 import { Threat } from "../types/threats";
 
-// Define the shape of the raw threat item from API
-type RawThreat = {
-  type?: string;
-  createdDateTime?: string;
-  severity?: string;
-  status?: string;
-  affected?: string;
-};
-
+// Fetch and map threat data
 const fetchThreats = async (): Promise<Threat[]> => {
   const res = await fetch("/api/threats", { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch");
-  const data = await res.json();
 
-  return (data.alerts || []).map((t: RawThreat) => ({
-    type: t.type || "Unknown",
-    time: t.createdDateTime || new Date().toISOString(),
-    severity: t.severity?.toLowerCase?.() || "low",
-    status: t.status || "Pending",
-    affected: t.affected || "Unknown endpoint",
-  }));
+  const data = await res.json();
+  const alerts = data.alerts || [];
+
+  // Normalize and sort by time (latest first)
+  return alerts
+    .map((a: any) => ({
+      ...a,
+      time: new Date(a.time ?? a.createdDateTime ?? "").toISOString(),
+    }))
+    .sort(
+      (a: Threat, b: Threat) =>
+        new Date(b.time).getTime() - new Date(a.time).getTime(),
+    );
 };
 
 export default function RealtimeDetection() {
@@ -41,18 +38,18 @@ export default function RealtimeDetection() {
   } = useQuery<Threat[]>({
     queryKey: ["threats"],
     queryFn: fetchThreats,
-    staleTime: 10000,
+    staleTime: 0, // ✅ Always fetch fresh
+    refetchOnMount: true, // ✅ Force refetch when component mounts
+    refetchInterval: 10000, // (optional) auto-refresh every 10s
   });
 
-  const filteredThreats = useMemo(
-    () =>
-      filter
-        ? threatLog.filter(
-            (t) => t.severity.toLowerCase() === filter.toLowerCase()
-          )
-        : threatLog,
-    [filter, threatLog]
-  );
+  const filteredThreats = useMemo(() => {
+    return filter
+      ? threatLog.filter(
+          (t) => t.severity?.toLowerCase() === filter.toLowerCase(),
+        )
+      : threatLog;
+  }, [filter, threatLog]);
 
   return (
     <div className="realtime p-4 flex flex-col h-full rounded-2xl shadow-md bg-white">
