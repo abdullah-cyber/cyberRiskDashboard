@@ -133,7 +133,7 @@ export async function GET(req: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("❌ Error fetching TrendMicro threats:", err);
+    console.error("Error fetching TrendMicro threats:", err);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

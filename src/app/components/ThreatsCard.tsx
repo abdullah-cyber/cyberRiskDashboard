@@ -3,7 +3,7 @@ import { Card } from "./ui/card";
 
 interface ThreatsCardProps {
   totalThreats: number; // last 24 hours
-  newThreats: number; // previous 24 hours
+  newThreats: number; // previous 24 hours?
 }
 
 export function ThreatsCard({ totalThreats, newThreats }: ThreatsCardProps) {
