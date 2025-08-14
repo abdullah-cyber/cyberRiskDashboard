@@ -8,9 +8,27 @@ if (!process.env.GEMINI_API_KEY) {
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const categories = {
-  Malware: ["malware","trojan","worm","spyware","ransomware","backdoor","infostealer","autoit","heuristic","keygen","keylogger"],
-  BruteForce: ["failed login","login attempt","authentication attempt","password guess","bruteforce"],
-  DDoS: ["ddos","denial of service"],
+  Malware: [
+    "malware",
+    "trojan",
+    "worm",
+    "spyware",
+    "ransomware",
+    "backdoor",
+    "infostealer",
+    "autoit",
+    "heuristic",
+    "keygen",
+    "keylogger",
+  ],
+  BruteForce: [
+    "failed login",
+    "login attempt",
+    "authentication attempt",
+    "password guess",
+    "bruteforce",
+  ],
+  DDoS: ["ddos", "denial of service"],
 };
 
 interface Threat {
@@ -31,26 +49,37 @@ export async function GET() {
     const now = new Date();
     const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const threats = allThreats
-      .filter(t => new Date(t.time) >= dayAgo)
+      .filter((t) => new Date(t.time) >= dayAgo)
       .map((t, idx) => ({ ...t, index: idx + 1 }));
 
     // Pre-classify
-    const grouped: Record<string, number[]> = { Malware: [], BruteForce: [], DDoS: [], Other: [] };
+    const grouped: Record<string, number[]> = {
+      Malware: [],
+      BruteForce: [],
+      DDoS: [],
+      Other: [],
+    };
     const ambiguous: Threat[] = [];
 
-    threats.forEach(t => {
+    threats.forEach((t) => {
       const text = `${t.type} ${t.affected}`.toLowerCase();
-      if (categories.Malware.some(k => text.includes(k))) grouped.Malware.push(t.index);
-      else if (categories.BruteForce.some(k => text.includes(k))) grouped.BruteForce.push(t.index);
-      else if (categories.DDoS.some(k => text.includes(k))) grouped.DDoS.push(t.index);
+      if (categories.Malware.some((k) => text.includes(k)))
+        grouped.Malware.push(t.index);
+      else if (categories.BruteForce.some((k) => text.includes(k)))
+        grouped.BruteForce.push(t.index);
+      else if (categories.DDoS.some((k) => text.includes(k)))
+        grouped.DDoS.push(t.index);
       else ambiguous.push(t);
     });
 
     // Gemini fallback
     if (ambiguous.length) {
-      const threatList = ambiguous.map(
-        t => `${t.index}. Type: ${t.type}, Status: ${t.status}, Severity: ${t.severity}, Affected: ${t.affected}`
-      ).join("\n");
+      const threatList = ambiguous
+        .map(
+          (t) =>
+            `${t.index}. Type: ${t.type}, Status: ${t.status}, Severity: ${t.severity}, Affected: ${t.affected}`
+        )
+        .join("\n");
 
       const prompt = `
 Classify each threat index into one category: Malware, BruteForce, DDoS, Other.
@@ -72,18 +101,18 @@ Output format:
         const geminiRes = await model.generateContent(prompt);
         const output = geminiRes.response.text().trim();
         const geminiGrouped = JSON.parse(output);
-        Object.keys(geminiGrouped).forEach(cat => {
+        Object.keys(geminiGrouped).forEach((cat) => {
           grouped[cat] = grouped[cat].concat(geminiGrouped[cat]);
         });
       } catch (e) {
-        ambiguous.forEach(t => grouped.Other.push(t.index));
+        ambiguous.forEach((t) => grouped.Other.push(t.index));
       }
     }
 
     // Percentages
     const total = threats.length;
     const percentages: Record<string, number> = {};
-    Object.keys(grouped).forEach(cat => {
+    Object.keys(grouped).forEach((cat) => {
       percentages[cat] = Math.round((grouped[cat].length / total) * 100);
     });
 

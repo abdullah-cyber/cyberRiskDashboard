@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
             Authorization: `Bearer ${API_KEY}`,
             "Content-Type": "application/json",
           },
-        },
+        }
       );
 
       const raw = await res.text();
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
           {
             status: res.status,
             headers: { "Content-Type": "application/json" },
-          },
+          }
         );
       }
 
@@ -89,8 +89,8 @@ export async function GET(req: NextRequest) {
           rawSeverity === "high"
             ? "high"
             : rawSeverity === "medium"
-              ? "medium"
-              : "low";
+            ? "medium"
+            : "low";
 
         const indicators = Array.isArray(item.indicators)
           ? item.indicators
