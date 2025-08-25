@@ -16,6 +16,9 @@ import { IncidenceChart } from "./components/IncidenceChart";
 import { ComplianceScore } from "./components/compliance-score";
 import RealtimeDetection from "./components/RealtimeDetection";
 import ThreatsCardWrapper from "./components/ThreatsCardWrapper";
+import OverviewChart from "./components/OverviewChart";
+import ThreatSeverityChart from "./components/ThreatsSeverityChart";
+import VulnerabilitiesChart from "./components/VulnerabilitiesChart";
 
 // Types
 interface Threat {
@@ -32,7 +35,6 @@ interface GroupedThreatsResponse {
   threats: Threat[];
   error?: string;
 }
-
 
 // API call
 async function fetchGroupedThreats(): Promise<GroupedThreatsResponse> {
@@ -52,7 +54,7 @@ export default function Dashboard() {
 
   const groupedSafe = data?.grouped || {
     Malware: [],
-    "Brute Force": [],
+    Backdoor: [],
     DDoS: [],
     Other: [],
   };
@@ -62,27 +64,25 @@ export default function Dashboard() {
 
   const threatCategories = [
     {
-      name: "Brute Force",
+      name: "Backdoor",
       percent: Math.round(
-        ((groupedSafe["Brute Force"]?.length || 0) / totalCount) * 100
+        ((groupedSafe["BackDoor"]?.length || 0) / totalCount) * 100,
       ),
     },
     {
       name: "Malware",
       percent: Math.round(
-        ((groupedSafe.Malware?.length || 0) / totalCount) * 100
+        ((groupedSafe.Malware?.length || 0) / totalCount) * 100,
       ),
     },
     {
       name: "DDoS",
-      percent: Math.round(
-        ((groupedSafe.DDoS?.length || 0) / totalCount) * 100
-      ),
+      percent: Math.round(((groupedSafe.DDoS?.length || 0) / totalCount) * 100),
     },
     {
       name: "Other",
       percent: Math.round(
-        ((groupedSafe.Other?.length || 0) / totalCount) * 100
+        ((groupedSafe.Other?.length || 0) / totalCount) * 100,
       ),
     },
   ];
@@ -97,6 +97,7 @@ export default function Dashboard() {
       chartMap.set(label, (chartMap.get(label) || 0) + 1);
     }
   });
+  //
 
   const chartData = Array.from(chartMap.entries()).map(([name, count]) => ({
     name,
@@ -131,10 +132,7 @@ export default function Dashboard() {
 
       {!isLoading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <RiskScoreCard
-            riskScore={riskScore}
-            severityLevel={severityLevel}
-          />
+          <RiskScoreCard riskScore={riskScore} severityLevel={severityLevel} />
           <ThreatCategories categories={threatCategories} />
           <ThreatsCardWrapper />
           <VulnerabilitiesCardWrapper />
@@ -142,6 +140,9 @@ export default function Dashboard() {
           <RealtimeDetection />
           <IncidenceChart data={chartData} />
           <ComplianceScore />
+          <OverviewChart grouped={groupedSafe} /> {/* ✅ new chart */}
+          <ThreatSeverityChart threats={threats} /> {/* chart */}
+          <VulnerabilitiesChart title="Vulnerabilities Chart" />
         </div>
       )}
     </div>

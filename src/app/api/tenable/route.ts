@@ -1,3 +1,4 @@
+// /api/tenable/route.ts
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -25,25 +26,27 @@ export async function GET(req: NextRequest) {
     if (!res.ok) {
       return new Response(
         JSON.stringify({ error: "Tenable API error", details: rawData }),
-        { status: res.status, headers: { "Content-Type": "application/json" } }
+        { status: res.status, headers: { "Content-Type": "application/json" } },
       );
     }
 
-    // Log the raw data for debugging
-    console.log("🔍 RAW DATA FROM TENABLE:", rawData);
+    const vulnerabilities = rawData?.vulnerabilities ?? [];
+    const shapedData = {
+      total_vulnerability_count: vulnerabilities.length,
+      vulnerabilities,
+    };
 
-    return new Response(JSON.stringify(rawData), {
+    return new Response(JSON.stringify(shapedData), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("Tenable API error:", err);
     return new Response(
       JSON.stringify({
         error: "Unexpected error",
         details: err instanceof Error ? err.message : String(err),
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
 }
