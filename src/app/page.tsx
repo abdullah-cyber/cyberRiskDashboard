@@ -110,43 +110,75 @@ export default function Dashboard() {
     calculateRiskScore(threats);
 
   return (
-    <div className="dashboard">
-      <div className="flex justify-between items-center mb-4">
-        <Image src="/images/image.png" alt="Logo" width={128} height={64} />
-        <h1 className="font-medium text-3xl">CyberRisk Dashboard</h1>
-        <button onClick={() => refetch()}>
-          <RefreshCcw />
-        </button>
-      </div>
+  <div className=" dashboard min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+    {/* Header */}
+    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+      <Image
+        src="/images/image.png"
+        alt="Logo"
+        width={128}
+        height={64}
+        className="object-contain"
+      />
+      <h1 className="font-medium text-2xl md:text-3xl text-center sm:text-left">
+        CyberRisk Dashboard
+      </h1>
+      <div className="flex items-center gap-3">
+  {/* Generate button */}
+  <button
+    className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg 
+               shadow-md hover:bg-blue-700 hover:shadow-lg 
+               focus:outline-none focus:ring-2 focus:ring-blue-400 
+               transition-all duration-200 ease-in-out"
+  >
+    Generate
+  </button>
 
-      {isLoading && (
-        <div className="text-center text-gray-500">Loading threats...</div>
-      )}
+  {/* Refresh button */}
+  <button
+    onClick={() => refetch()}
+    className="p-2 rounded-full bg-white shadow-md 
+               hover:bg-gray-100 hover:scale-105 
+               focus:ring-2 focus:ring-blue-400 
+               transition-all duration-200 ease-in-out"
+  >
+    <RefreshCcw className="w-6 h-6 text-blue-600" />
+  </button>
+</div>
 
-      {error && (
-        <div className="text-center text-red-600 font-semibold mb-4">
-          Failed to load grouped threats data:{" "}
-          {error instanceof Error ? error.message : String(error)}
-        </div>
-      )}
-
-      {!isLoading && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <RiskScoreCard riskScore={riskScore} severityLevel={severityLevel} />
-          <ThreatCategories categories={threatCategories} />
-          <ThreatsCardWrapper />
-          <VulnerabilitiesCardWrapper />
-          <IncidentsResolvedCard />
-          <RealtimeDetection />
-          <IncidenceChart data={chartData} />
-          <ComplianceScore />
-          <OverviewChart grouped={groupedSafe} /> {/* ✅ new chart */}
-          <ThreatSeverityChart threats={threats} /> {/* chart */}
-          <VulnerabilitiesChart title="Vulnerabilities Chart" />
-        </div>
-      )}
     </div>
-  );
+
+    {/* Loading / Error */}
+    {isLoading && (
+      <div className="text-center text-gray-500">Loading threats...</div>
+    )}
+    {error && (
+      <div className="text-center text-red-600 font-semibold mb-4">
+        Failed to load grouped threats data:{" "}
+        {error instanceof Error ? error.message : String(error)}
+      </div>
+    )}
+
+    {/* Dashboard Grid (unchanged) */}
+    {!isLoading && !error && (
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <RiskScoreCard riskScore={riskScore} severityLevel={severityLevel} />
+        <ThreatCategories categories={threatCategories} />
+        <ThreatsCardWrapper />
+        <VulnerabilitiesCardWrapper />
+        <IncidentsResolvedCard />
+        <RealtimeDetection />
+        <IncidenceChart data={chartData} />
+        <ComplianceScore />
+        <OverviewChart grouped={groupedSafe} />
+        <ThreatSeverityChart threats={threats} />
+        <VulnerabilitiesChart title="Vulnerabilities Chart" />
+      </div>
+    )}
+  </div>
+);
+
+
 }
 
 // Risk score logic

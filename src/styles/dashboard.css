@@ -273,8 +273,8 @@ td {
   overflow-y: auto;
   scroll-behavior: smooth;
   padding-right: 0.5rem;
-  max-height: none; /* or just remove this line */
 }
+ 
 
 .card table {
   min-width: 100%;
@@ -306,4 +306,70 @@ tbody tr:hover {
 .table-scroll {
   max-height: 140px; /* adjust to control visible rows */
   overflow-y: auto;
+}
+/* ========= Extra Responsive Rules ========= */
+
+/* Tablet (<=1024px) */
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto;
+  }
+
+  .wide {
+    grid-column: span 2;
+  }
+
+  .span-rows,
+  .realtime {
+    grid-column: span 2;
+    grid-row: auto;
+  }
+}
+
+/* Mobile (<=768px) */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .wide,
+  .span-rows,
+  .realtime {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .card {
+    padding: 0.75rem;
+  }
+
+  .dropdown {
+    width: 100%;
+  }
+
+  table {
+    font-size: 0.8rem;
+  }
+}
+
+/* Small Mobile (<=480px) */
+@media (max-width: 480px) {
+  .dashboard {
+    padding: 1rem;
+  }
+
+  .card {
+    padding: 0.5rem;
+  }
+
+  h1,
+  h2 {
+    font-size: 1.2rem;
+  }
+
+  .score {
+    font-size: 1.2rem;
+  }
 }
