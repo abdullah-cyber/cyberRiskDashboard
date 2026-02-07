@@ -1,164 +1,214 @@
-// pages/dashboard.tsx
-'use client';
-import { useEffect, useState } from "react";
+"use client";
+
 import Image from "next/image";
-// import logo from "../public/images/image.png";
 import { RefreshCcw } from "lucide-react";
 import "../styles/dashboard.css";
+import { useQuery } from "@tanstack/react-query";
 
+import type { SeverityLevel } from "./components/RiskScoreCard";
+import { VulnerabilitiesCardWrapper } from "./components/VulnerabilitiesWrapper";
 import {
   RiskScoreCard,
-  ThreatsCard,
   ThreatCategories,
-  VulnerabilitiesCard,
   IncidentsResolvedCard,
-  RealtimeDetection,
 } from "./components";
-
 import { IncidenceChart } from "./components/IncidenceChart";
 import { ComplianceScore } from "./components/compliance-score";
+import RealtimeDetection from "./components/RealtimeDetection";
+import ThreatsCardWrapper from "./components/ThreatsCardWrapper";
+import OverviewChart from "./components/OverviewChart";
+import ThreatSeverityChart from "./components/ThreatsSeverityChart";
+import VulnerabilitiesChart from "./components/VulnerabilitiesChart";
+
+// Types
+interface Threat {
+  index: number;
+  type: string;
+  time: string;
+  severity: string;
+  status: string;
+  affected: string;
+}
+
+interface GroupedThreatsResponse {
+  grouped: Record<string, Threat[]>;
+  threats: Threat[];
+  error?: string;
+}
+
+// API call
+async function fetchGroupedThreats(): Promise<GroupedThreatsResponse> {
+  const res = await fetch("/api/groupthreats");
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+  return res.json();
+}
 
 export default function Dashboard() {
-  const threatCategories = [
-    { name: "Brute Force", percent: 34 },
-    { name: "Malware", percent: 12 },
-    { name: "DDoS", percent: 25 },
-    { name: "Phishing", percent: 4 },
-  ];
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: ["groupedThreats"],
+    queryFn: fetchGroupedThreats,
+    refetchInterval: 60000, // refresh every 60s
+  });
 
-  const [threatLog, setThreatLog] = useState([
-    {
-    type: "Malware",
-    method: "Drive-by download",
-    time: "Just now",
-    severity: "High",
-    status: "Blocked",
-    affected: 1
-    },
-  ]);
-
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     const newThreat = {
-  //       type: ["Malware", "Phishing", "DDoS", "Brute Force"][
-  //         Math.floor(Math.random() * 4)
-  //       ],
-  //       method: "Email attachment",
-  //       time: "Just now",
-  //       severity: ["High", "Medium", "Low"][Math.floor(Math.random() * 3)],
-  //       status: "Blocked",
-  //       affected: Math.floor(Math.random() * 10 + 1),
-  //     };
-  //     setThreatLog((prev) => [newThreat, ...prev].slice(0, 5));
-  //   }, 5000);
-  //   return () => clearInterval(interval);
-  // }, []);
-
-//   useEffect(() => {
-//   const apiKey = process.env.NEXT_PUBLIC_DASHBOARD_API_KEY;
-
-//   fetch("https://your-api.com/threats", {
-//     headers: {
-//       Authorization: `Bearer ${apiKey}`,
-//     },
-//   })
-//     .then((res) => res.json())
-//     .then((data) => {
-//       // Save the result into threatLog
-//       setThreatLog(data);
-//     })
-//     .catch((error) => {
-//       console.error("Failed to fetch threats:", error);
-//     });
-// }, []);
-
-// useEffect(() => {
-//   const apiKey = process.env.NEXT_PUBLIC_DASHBOARD_API_KEY;
-
-//   fetch("https://jsonplaceholder.typicode.com/posts")
-//     .then((res) => res.json())
-//     .then((data) => {
-//       setThreatLog(
-//         data.slice(0, 5).map((item: { id: any; }) => ({
-//           type: "Phishing",
-//           method: "Test API",
-//           time: "Now",
-//           severity: "Medium",
-//           status: "Blocked",
-//           affected: item.id,
-//         }))
-//       );
-//     })
-//     .catch((error) => {
-//       console.error("Test fetch failed:", error);
-//     });
-// }, []);
-
-// useEffect(() => {
-//   const fetchThreats = async () => {
-//     try {
-//       const res = await fetch("/api/threats");
-//       const data = await res.json();
-
-//       if (Array.isArray(data)) {
-//         setThreatLog(data);
-//       } else if (Array.isArray(data?.threats)) {
-//         setThreatLog(data.threats);
-//       } else {
-//         console.warn("Unexpected data format from /api/threats:", data);
-//         setThreatLog([]); // Fallback to empty array
-//       }
-//     } catch (err) {
-//       console.error("Failed to fetch threats:", err);
-//       setThreatLog([]); // Fallback to empty array on error
-//     }
-//   };
-
-//   fetchThreats();
-// }, []);
-
-useEffect(() => {
-  const fetchThreats = async () => {
-    try {
-      const res = await fetch("/api/threats");
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || "Failed to load threats");
-
-      if (Array.isArray(data.threats)) {
-        setThreatLog(data.threats);
-      } else {
-        console.warn("Unexpected format:", data);
-        setThreatLog([]);
-      }
-    } catch (err: any) {
-      console.error("Error:", err.message);
-      setThreatLog([]);
-    }
+  const groupedSafe = data?.grouped || {
+    Malware: [],
+    Backdoor: [],
+    DDoS: [],
+    Other: [],
   };
 
-  fetchThreats();
-}, []);
+  const threats = data?.threats || [];
+  const totalCount = threats.length || 1;
 
+  const threatCategories = [
+    {
+      name: "Backdoor",
+      percent: Math.round(
+        ((groupedSafe["BackDoor"]?.length || 0) / totalCount) * 100,
+      ),
+    },
+    {
+      name: "Malware",
+      percent: Math.round(
+        ((groupedSafe.Malware?.length || 0) / totalCount) * 100,
+      ),
+    },
+    {
+      name: "DDoS",
+      percent: Math.round(((groupedSafe.DDoS?.length || 0) / totalCount) * 100),
+    },
+    {
+      name: "Other",
+      percent: Math.round(
+        ((groupedSafe.Other?.length || 0) / totalCount) * 100,
+      ),
+    },
+  ];
+
+  // Chart data
+  const chartMap = new Map<string, number>();
+  threats.forEach((t) => {
+    const d = new Date(t.time);
+    if (!isNaN(d.getTime())) {
+      const hour = d.getHours();
+      const label = `${hour}:00`;
+      chartMap.set(label, (chartMap.get(label) || 0) + 1);
+    }
+  });
+  //
+
+  const chartData = Array.from(chartMap.entries()).map(([name, count]) => ({
+    name,
+    uv: count,
+    pv: 0,
+    amt: 0,
+  }));
+
+  const { score: riskScore, severity: severityLevel } =
+    calculateRiskScore(threats);
 
   return (
-    <div className="dashboard">
-      <div className="flex justify-between items-center mb-4">
-        <Image src= "/images/image.png" alt="Logo" width={128} height={64} />
-        <h1 className="font-medium text-3xl">CyberRisk Dashboard</h1>
-        <RefreshCcw />
-      </div>
+  <div className=" dashboard min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+    {/* Header */}
+    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+      <Image
+        src="/images/image.png"
+        alt="Logo"
+        width={128}
+        height={64}
+        className="object-contain"
+      />
+      <h1 className="font-medium text-2xl md:text-3xl text-center sm:text-left">
+        CyberRisk Dashboard
+      </h1>
+      <div className="flex items-center gap-3">
+  {/* Generate button */}
+  <button
+    className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg 
+               shadow-md hover:bg-blue-700 hover:shadow-lg 
+               focus:outline-none focus:ring-2 focus:ring-blue-400 
+               transition-all duration-200 ease-in-out"
+  >
+    Generate
+  </button>
 
-      <div className="grid">
-        <RiskScoreCard />
-        <ThreatsCard />
-        <ThreatCategories categories={threatCategories} />
-        <VulnerabilitiesCard />
-        <IncidentsResolvedCard />
-        <RealtimeDetection threatLog={threatLog} />
-        <IncidenceChart data={undefined} />
-        <ComplianceScore />
-      </div>
+  {/* Refresh button */}
+  <button
+    onClick={() => refetch()}
+    className="p-2 rounded-full bg-white shadow-md 
+               hover:bg-gray-100 hover:scale-105 
+               focus:ring-2 focus:ring-blue-400 
+               transition-all duration-200 ease-in-out"
+  >
+    <RefreshCcw className="w-6 h-6 text-blue-600" />
+  </button>
+</div>
+
     </div>
-  );
+
+    {/* Loading / Error */}
+    {isLoading && (
+      <div className="text-center text-gray-500">Loading threats...</div>
+    )}
+    {error && (
+      <div className="text-center text-red-600 font-semibold mb-4">
+        Failed to load grouped threats data:{" "}
+        {error instanceof Error ? error.message : String(error)}
+      </div>
+    )}
+
+    {/* Dashboard Grid (unchanged) */}
+    {!isLoading && !error && (
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <RiskScoreCard riskScore={riskScore} severityLevel={severityLevel} />
+        <ThreatCategories categories={threatCategories} />
+        <ThreatsCardWrapper />
+        <VulnerabilitiesCardWrapper />
+        <IncidentsResolvedCard />
+        <RealtimeDetection />
+        <IncidenceChart data={chartData} />
+        <ComplianceScore />
+        <OverviewChart grouped={groupedSafe} />
+        <ThreatSeverityChart threats={threats} />
+        <VulnerabilitiesChart title="Vulnerabilities Chart" />
+      </div>
+    )}
+  </div>
+);
+
+
+}
+
+// Risk score logic
+function calculateRiskScore(threatLog: Threat[]): {
+  score: number;
+  severity: SeverityLevel;
+} {
+  if (threatLog.length === 0) return { score: 0, severity: "Low" };
+
+  let total = 0;
+  threatLog.forEach((t) => {
+    switch (t.severity.toLowerCase()) {
+      case "high":
+        total += 10;
+        break;
+      case "medium":
+        total += 5;
+        break;
+      case "low":
+        total += 2;
+        break;
+      default:
+        total += 1;
+    }
+  });
+
+  const maxScore = threatLog.length * 10;
+  const score = Math.min(Math.round((total / maxScore) * 100), 100);
+  const severity: SeverityLevel =
+    score >= 70 ? "High" : score >= 40 ? "Medium" : "Low";
+
+  return { score, severity };
 }

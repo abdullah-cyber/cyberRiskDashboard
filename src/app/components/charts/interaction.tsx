@@ -1,5 +1,5 @@
-'use client';
-import React, { PureComponent } from "react";
+"use client";
+import React, { JSX, PureComponent } from "react";
 import {
   AreaChart,
   Area,
@@ -10,41 +10,30 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const data = [
-  {
-    name: "Malware",
-    uv: 500,
-    pv: 500,
-    amt: 42,
-  },
-  {
-    name: "Phishing",
-    uv: 200,
-    pv: 301,
-    amt: 89,
-  },
-  {
-    name: "DDoS",
-    uv: 49,
-    pv: 300,
-    amt: 245,
-  },
-];
+// Define the shape of chart data
+interface ChartData {
+  name: string;
+  uv: number;
+  pv: number;
+  amt: number;
+}
 
-export class Chart extends PureComponent {
-  render() {
+// Props interface
+interface ChartProps {
+  data: ChartData[];
+}
+
+export class Chart extends PureComponent<ChartProps> {
+  render(): JSX.Element {
+    const { data } = this.props;
+
     return (
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           width={500}
           height={400}
           data={data}
-          margin={{
-            top: 10,
-            right: 30,
-            left: 0,
-            bottom: 0,
-          }}
+          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="name" />
